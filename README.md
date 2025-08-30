@@ -1,3 +1,14 @@
+---
+title: AI Trade Forecaster
+emoji: 📈
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: "4.29.0"
+app_file: src/app.py
+pinned: false
+---
+
 # AI-Powered Global Trade Forecasting and Analysis Platform
 
 This project provides a comprehensive platform for forecasting and analyzing global trade data. It uses historical merchandise trade data to train a time-series forecasting model and offers a simple chatbot interface to retrieve future trade predictions.
