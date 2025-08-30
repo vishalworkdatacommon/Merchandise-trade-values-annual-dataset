@@ -6,3 +6,5 @@ gradio
 flask
 tensorflow
 wbgapi
+transformers
+torch
