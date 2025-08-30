@@ -31,8 +31,8 @@ def clean_and_treat_outliers(input_path, output_path):
     rolling_median = df_agg['Value'].rolling(window=window_size, center=True).median()
     rolling_std = df_agg['Value'].rolling(window=window_size, center=True).std()
 
-    # Identify outliers as points more than 3 standard deviations from the rolling median
-    outlier_threshold = 3
+    # Identify outliers as points more than 2 standard deviations from the rolling median
+    outlier_threshold = 2
     is_outlier = (df_agg['Value'] - rolling_median).abs() > (outlier_threshold * rolling_std)
 
     outliers = df_agg[is_outlier]
