@@ -82,10 +82,10 @@ This trains the model and saves the 5-year forecast.
 python3 src/forecasting_script.py
 ```
 
-**Step 6: Interact with the Chatbot**
-Run the chatbot to ask for forecasts for specific years.
+**Step 6: Run the Web Application**
+This will start a local web server. You can open the provided URL in your browser to interact with the application.
 ```bash
-python3 src/chatbot.py
+python3 src/app.py
 ```
 
 ## Deployment with Docker
@@ -102,10 +102,36 @@ docker build -t trade-forecasting-app .
 
 ### 2. Run the Docker Container
 
-After the image is built, you can run the chatbot in a container:
+After the image is built, you can run the web application in a container:
 
 ```bash
-docker run -it --rm trade-forecasting-app
+docker run -it --rm -p 7860:7860 trade-forecasting-app
+```
+Open your browser and navigate to `http://localhost:7860` to use the app.
+
+## Deployment to Hugging Face Spaces
+
+This project is optimized for deployment on Hugging Face Spaces.
+
+### 1. Create a New Space
+
+- Go to [huggingface.co/new-space](https://huggingface.co/new-space).
+- Give your Space a name.
+- Select **Gradio** as the SDK.
+- Choose the **"Use the free CPU"** hardware.
+- Select **"Public"** for the visibility.
+- Click **"Create Space"**.
+
+### 2. Push Your Code
+
+You will be given instructions on how to push your repository to the new Space. It will look something like this:
+
+```bash
+# Add the Hugging Face remote
+git remote add space https://huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME
+
+# Push your code to the 'main' branch of the Space
+git push --force space main
 ```
 
-This will start the chatbot, and you can begin asking it questions.
+Once you push your code, Hugging Face will automatically build the Docker container and launch your Gradio application. Your AI-powered forecasting tool will then be live for anyone to use!

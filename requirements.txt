@@ -2,3 +2,5 @@ pandas
 statsmodels
 matplotlib
 seaborn
+gradio
+flask
