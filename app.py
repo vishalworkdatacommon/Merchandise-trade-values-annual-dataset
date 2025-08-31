@@ -87,7 +87,10 @@ def get_trade_forecast(year, forecast_df, backtest_df):
 # --- 4. Setup and Launch the App ---
 def main():
     """Main function to launch the Gradio app."""
-    data_dir = 'data'
+    # Build absolute paths from the script's location
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(base_dir, 'data')
+    
     sarimax_csv_path = os.path.join(data_dir, 'china_exports_forecast.csv')
     lstm_csv_path = os.path.join(data_dir, 'china_exports_forecast_lstm.csv')
     backtest_csv_path = os.path.join(data_dir, 'backtest_results.csv')
