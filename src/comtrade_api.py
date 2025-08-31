@@ -1,25 +1,34 @@
 import requests
 import pandas as pd
+import os
 
 def get_comtrade_data(reporter_id, partner_id, product_id):
     """
-    Fetches annual trade data from the UN Comtrade public API.
+    Fetches annual trade data from the UN Comtrade API using an API key.
     """
-    base_url = f"https://comtradeapi.un.org/data/v1/get/C/A/HS"
+    base_url = "https://comtradeapi.un.org/data/v1/get/C/A/HS"
+    
+    api_key = os.environ.get("UN_COMTRADE_API_KEY")
+    if not api_key:
+        raise ValueError("UN_COMTRADE_API_KEY environment variable not set.")
+
+    headers = {
+        "Ocp-Apim-Subscription-Key": api_key
+    }
     
     params = {
         "reporterCode": reporter_id,
         "partnerCode": partner_id,
         "cmdCode": product_id,
         "period": "recent",
-        "flowCode": "M", # Imports
+        "flowCode": "M",
         "includeDesc": "true"
     }
     
     print(f"Fetching data from UN Comtrade for: r={reporter_id}, p={partner_id}, cc={product_id}")
     
     try:
-        response = requests.get(base_url, params=params)
+        response = requests.get(base_url, params=params, headers=headers)
         response.raise_for_status()
         data = response.json()
         
@@ -28,7 +37,6 @@ def get_comtrade_data(reporter_id, partner_id, product_id):
             return pd.DataFrame()
 
         df = pd.DataFrame(data['data'])
-        
         df = df[['period', 'reporterDesc', 'partnerDesc', 'cmdDesc', 'primaryValue']]
         
         df.rename(columns={
@@ -49,6 +57,7 @@ def get_comtrade_data(reporter_id, partner_id, product_id):
         return pd.DataFrame()
 
 if __name__ == "__main__":
+    # This will fail unless you set the environment variable
     test_df = get_comtrade_data(reporter_id="842", partner_id="0", product_id="8703")
     if not test_df.empty:
         print("\n--- Test API Fetch Successful ---")

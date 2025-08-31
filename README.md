@@ -60,16 +60,17 @@ This project is now fully configured for deployment on Hugging Face Spaces.
 - Select **"Public"**.
 - Click **"Create Space"**.
 
-### 2. Add Your Hugging Face Token as a Secret
+### 2. Add Your API Keys as Secrets
 
-This is a **critical step**. The application needs your Hugging Face token to download the gated Gemma LLM.
+This is a **critical step**. The application needs two API keys to function:
 
 - In your Hugging Face Space, go to the **"Settings"** tab.
 - Find the **"Repository secrets"** section.
-- Click **"New secret"**.
-- For the **Name**, enter `HF_TOKEN`.
-- For the **Value**, paste your Hugging Face access token. You can get one from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
-- Click **"Save secret"**.
+- Add the following two secrets:
+    1.  **Name:** `HF_TOKEN`
+        - **Value:** Your Hugging Face access token.
+    2.  **Name:** `UN_COMTRADE_API_KEY`
+        - **Value:** Your UN Comtrade API subscription key. You can get one for free from the [UN Comtrade Portal](https://comtradeplus.un.org/portal).
 
 ### 3. Push Your Code
 
