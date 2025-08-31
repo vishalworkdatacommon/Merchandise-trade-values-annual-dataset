@@ -1,11 +1,11 @@
 import os
 import pandas as pd
 import gradio as gr
-from data_processing_script import process_trade_data
-from data_cleaning_script import clean_and_treat_outliers
-from data_integration_script import integrate_external_data
-from forecasting_script import forecast_sarimax
-from advanced_forecasting_script import forecast_lstm
+from src.data_processing_script import process_trade_data
+from src.data_cleaning_script import clean_and_treat_outliers
+from src.data_integration_script import integrate_external_data
+from src.forecasting_script import forecast_sarimax
+from src.advanced_forecasting_script import forecast_lstm
 
 def run_analysis_pipeline(reporter, partner, product, country_code, progress=gr.Progress()):
     """
