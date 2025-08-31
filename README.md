@@ -5,7 +5,7 @@ colorFrom: blue
 colorTo: indigo
 sdk: gradio
 sdk_version: "4.29.0"
-pinned: false
+app_file: src/main.py
 ---
 
 # AI-Powered Global Trade Forecasting and Analysis Platform
@@ -56,7 +56,7 @@ This project is now fully configured for deployment on Hugging Face Spaces.
 
 - Go to [huggingface.co/new-space](https://huggingface.co/new-space).
 - Give your Space a name.
-- Select **Docker** as the Space SDK.
+- Select **Gradio** as the Space SDK.
 - Choose the **"Use the free CPU"** hardware.
 - Select **"Public"**.
 - Click **"Create Space"**.
