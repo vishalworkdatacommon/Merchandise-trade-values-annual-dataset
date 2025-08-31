@@ -4,6 +4,7 @@ import os
 from transformers import pipeline
 import torch
 import sys
+import json
 
 # Add the 'src' directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
@@ -28,42 +29,48 @@ except Exception as e:
 
 # --- 2. Load Data for Dropdowns ---
 def get_dropdown_choices():
-    """Loads the raw data to populate the dropdown menus."""
+    """Loads the metadata from local JSON files to populate the dropdowns."""
     try:
-        df = pd.read_csv('data/merchandise_values_annual_input.csv', usecols=['Reporter', 'Partner', 'Product'], encoding='latin1')
-        reporters = sorted(df['Reporter'].unique().tolist())
-        partners = sorted(df['Partner'].unique().tolist())
-        products = sorted(df['Product'].unique().tolist())
-        return reporters, partners, products
+        with open('data/reporters.json', 'r') as f:
+            reporters = json.load(f)
+        with open('data/commodities.json', 'r') as f:
+            commodities = json.load(f)
+            
+        # Add a "World" partner
+        partners = [{"id": "0", "text": "World"}] + reporters
+        
+        # Format for Gradio dropdowns
+        reporter_choices = [(r['text'], r['id']) for r in reporters]
+        partner_choices = [(p['text'], p['id']) for p in partners]
+        commodity_choices = [(c['text'], c['id']) for c in commodities]
+        
+        return reporter_choices, partner_choices, commodity_choices
     except FileNotFoundError:
         return [], [], []
 
 # --- 3. Define Core Logic ---
-def generate_analysis(reporter, partner, product, progress=gr.Progress()):
+def generate_analysis(reporter_id, partner_id, product_id, progress=gr.Progress()):
     """
     Main function for the Gradio interface. Runs the pipeline and generates AI analysis.
     """
-    if not all([reporter, partner, product]):
+    if not all([reporter_id, partner_id, product_id]):
         return "Please make a selection for all dropdowns.", ""
 
-    # A simple mapping for country name to country code for the GDP API
-    # This would be more robust with a proper country code library
-    country_code_map = {"China": "CHN", "United States": "USA", "Germany": "DEU", "Japan": "JPN"}
-    country_code = country_code_map.get(reporter, "WLD") # Default to World if not found
+    country_code_map = {"842": "USA", "156": "CHN", "276": "DEU", "392": "JPN", "356": "IND"}
+    country_code = country_code_map.get(reporter_id, "WLD")
 
-    forecast_df, _ = run_analysis_pipeline(reporter, partner, product, country_code, progress)
+    forecast_df, error_message = run_analysis_pipeline(reporter_id, partner_id, product_id, country_code, progress)
+
+    if error_message:
+        return None, f"**Analysis Failed**\n\n{error_message}"
 
     if forecast_df is None:
-        return "No data found for the selected combination. Please try another.", ""
+        return None, "An unknown error occurred."
 
-    # --- Create a Dynamic Prompt for the LLM ---
     prompt = f"""
     <start_of_turn>user
-    You are an expert economic analyst. Provide a forecast summary for the following trade relationship:
-    - **Exporting Country:** {reporter}
-    - **Importing Country/Region:** {partner}
-    - **Product Category:** {product}
-
+    You are an expert economic analyst. Provide a forecast summary for the trade relationship based on the following data. 
+    
     **Forecasts for the next 5 years:**
     {forecast_df.to_string()}
 
@@ -81,16 +88,16 @@ def generate_analysis(reporter, partner, product, progress=gr.Progress()):
 
 # --- 4. Setup and Launch the App ---
 if __name__ == "__main__":
-    reporters, partners, products = get_dropdown_choices()
+    reporter_choices, partner_choices, commodity_choices = get_dropdown_choices()
 
     with gr.Blocks() as demo:
         gr.Markdown("# Gen AI-Powered Global Trade Forecaster")
-        gr.Markdown("Select an exporting country, an importing partner, and a product category to generate a 5-year forecast and a dynamic AI-powered analysis.")
+        gr.Markdown("Select an exporting country, an importing partner, and a product category to generate a 5-year forecast using live data from the UN Comtrade API.")
         
         with gr.Row():
-            reporter_dd = gr.Dropdown(reporters, label="Reporter (Exporting Country)", value="China")
-            partner_dd = gr.Dropdown(partners, label="Partner (Importing Country/Region)", value="World")
-            product_dd = gr.Dropdown(products, label="Product Category", value="Total merchandise")
+            reporter_dd = gr.Dropdown(reporter_choices, label="Reporter (Exporting Country)")
+            partner_dd = gr.Dropdown(partner_choices, label="Partner (Importing Country/Region)")
+            product_dd = gr.Dropdown(commodity_choices, label="Product Category")
         
         submit_btn = gr.Button("Generate Forecast and Analysis")
         
