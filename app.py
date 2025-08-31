@@ -36,11 +36,10 @@ def get_dropdown_choices():
         with open('data/commodities.json', 'r') as f:
             commodities = json.load(f)
             
-        # Add a "World" partner
+        # "World" is a valid partner, but not a reporter.
         partners = [{"id": "0", "text": "World"}] + reporters
         
-        # Format for Gradio dropdowns
-        reporter_choices = [(r['text'], r['id']) for r in reporters]
+        reporter_choices = [(r['text'], r['id']) for r in reporters if r['text'] != 'World']
         partner_choices = [(p['text'], p['id']) for p in partners]
         commodity_choices = [(c['text'], c['id']) for c in commodities]
         
@@ -54,7 +53,7 @@ def generate_analysis(reporter_id, partner_id, product_id, progress=gr.Progress(
     Main function for the Gradio interface. Runs the pipeline and generates AI analysis.
     """
     if not all([reporter_id, partner_id, product_id]):
-        return "Please make a selection for all dropdowns.", ""
+        return None, "Please make a selection for all dropdowns."
 
     country_code_map = {"842": "USA", "156": "CHN", "276": "DEU", "392": "JPN", "356": "IND"}
     country_code = country_code_map.get(reporter_id, "WLD")
@@ -69,7 +68,7 @@ def generate_analysis(reporter_id, partner_id, product_id, progress=gr.Progress(
 
     prompt = f"""
     <start_of_turn>user
-    You are an expert economic analyst. Provide a forecast summary for the trade relationship based on the following data. 
+    You are an expert economic analyst. Provide a forecast summary for the trade relationship based on the following data.
     
     **Forecasts for the next 5 years:**
     {forecast_df.to_string()}
@@ -95,9 +94,9 @@ if __name__ == "__main__":
         gr.Markdown("Select an exporting country, an importing partner, and a product category to generate a 5-year forecast using live data from the UN Comtrade API.")
         
         with gr.Row():
-            reporter_dd = gr.Dropdown(reporter_choices, label="Reporter (Exporting Country)")
-            partner_dd = gr.Dropdown(partner_choices, label="Partner (Importing Country/Region)")
-            product_dd = gr.Dropdown(commodity_choices, label="Product Category")
+            reporter_dd = gr.Dropdown(reporter_choices, label="Reporter (Exporting Country)", value="842") # Default to USA
+            partner_dd = gr.Dropdown(partner_choices, label="Partner (Importing Country/Region)", value="0") # Default to World
+            product_dd = gr.Dropdown(commodity_choices, label="Product Category", value="87") # Default to Vehicles
         
         submit_btn = gr.Button("Generate Forecast and Analysis")
         
