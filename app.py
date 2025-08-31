@@ -47,17 +47,17 @@ def get_dropdown_choices():
         return [], [], []
 
 # --- 3. Define Core Logic ---
-def generate_analysis(reporter, partner, product, progress=gr.Progress()):
+def generate_analysis(reporter_id, partner_id, product_id, progress=gr.Progress()):
     """
     Main function for the Gradio interface. Runs the pipeline and generates AI analysis.
     """
-    if not all([reporter, partner, product]):
+    if not all([reporter_id, partner_id, product_id]):
         return None, "Please make a selection for all dropdowns."
 
-    country_code_map = {"USA": "USA", "China": "CHN", "Germany": "DEU", "Japan": "JPN", "India": "IND"}
-    country_code = country_code_map.get(reporter, "WLD")
+    country_code_map = {"842": "USA", "156": "CHN", "276": "DEU", "392": "JPN", "356": "IND"}
+    country_code = country_code_map.get(reporter_id, "WLD")
 
-    forecast_df, error_message = run_analysis_pipeline(reporter, partner, product, country_code, progress)
+    forecast_df, error_message = run_analysis_pipeline(reporter_id, partner_id, product_id, country_code, progress)
 
     if error_message:
         return None, f"**Analysis Failed**\n\n{error_message}"
