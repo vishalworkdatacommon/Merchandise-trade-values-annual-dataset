@@ -14,14 +14,13 @@ This project provides a comprehensive, industry-level platform for forecasting a
 
 ## Features
 
-- **Automated Data Pipeline:** Scripts to download, process, clean, enrich with external GDP data, and prepare trade data for modeling.
-- **Advanced Forecasting:** Implements and compares a classical statistical model (SARIMAX) and a deep learning model (LSTM).
-- **Rigorous Backtesting:** Includes a backtesting framework to evaluate model performance on historical data, proving the SARIMAX model's superior accuracy for this dataset.
-- **Generative AI Analysis:** Uses a Large Language Model (Google's Gemma) to provide dynamic, context-aware analysis of the forecasts, informed by the backtesting results.
-- **Interactive Web UI:** A user-friendly web application built with Gradio.
+- **Interactive Analysis:** Allows users to select any country, partner, and product combination for on-the-fly forecasting.
+- **Dynamic AI Insights:** Uses a Large Language Model (Google's Gemma) to provide a custom analysis for each user query.
+- **Advanced Forecasting:** Implements and compares a classical statistical model (SARIMAX) and a deep learning model (LSTM) for any selected data series.
+- **Automated Data Pipeline:** A complete pipeline that processes, cleans, and enriches data with external GDP information in real-time.
 - **Professional Project Structure:** Organized, documented, and version-controlled with Git.
 - **Automated Testing & CI/CD:** Includes unit tests and a GitHub Actions workflow for continuous integration.
-- **Deployable & Shareable:** Fully containerized with Docker for reproducible deployment on Hugging Face Spaces.
+- **Deployable & Shareable:** Ready for deployment on Hugging Face Spaces.
 
 ## Getting Started
 

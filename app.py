@@ -1,8 +1,14 @@
-import pandas as pd
 import gradio as gr
+import pandas as pd
 import os
 from transformers import pipeline
 import torch
+import sys
+
+# Add the 'src' directory to the Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+
+from pipeline import run_analysis_pipeline
 
 # --- 1. Initialize the Generative AI Model ---
 print("Initializing Generative AI pipeline...")
@@ -20,95 +26,82 @@ except Exception as e:
     def generator(prompt, **kwargs):
         return [{"generated_text": "Generative AI model could not be loaded. This is a placeholder."}]
 
-# --- 2. Load Pre-Generated Data ---
-def load_data(sarimax_path, lstm_path, backtest_path):
-    """Loads all necessary pre-generated data files."""
+# --- 2. Load Data for Dropdowns ---
+def get_dropdown_choices():
+    """Loads the raw data to populate the dropdown menus."""
     try:
-        sarimax_df = pd.read_csv(sarimax_path, index_col='Year', parse_dates=True)
-        lstm_df = pd.read_csv(lstm_path, index_col='Year', parse_dates=True)
-        backtest_df = pd.read_csv(backtest_path)
-        
-        combined_df = sarimax_df[['mean']].rename(columns={'mean': 'SARIMAX_Forecast'})
-        combined_df['LSTM_Forecast'] = lstm_df['mean']
-        
-        return combined_df, backtest_df
-    except FileNotFoundError as e:
-        raise FileNotFoundError(f"CRITICAL ERROR: Data files not found: {e}. The application cannot start.")
+        df = pd.read_csv('data/merchandise_values_annual_input.csv', usecols=['Reporter', 'Partner', 'Product'], encoding='latin1')
+        reporters = sorted(df['Reporter'].unique().tolist())
+        partners = sorted(df['Partner'].unique().tolist())
+        products = sorted(df['Product'].unique().tolist())
+        return reporters, partners, products
+    except FileNotFoundError:
+        return [], [], []
 
 # --- 3. Define Core Logic ---
-def get_trade_forecast(year, forecast_df, backtest_df):
+def generate_analysis(reporter, partner, product, progress=gr.Progress()):
     """
-    Retrieves forecasts and uses a Gen AI model to generate a dynamic analysis.
+    Main function for the Gradio interface. Runs the pipeline and generates AI analysis.
     """
-    if not year:
-        return "Please enter a year to get a forecast."
-        
-    try:
-        year = int(year)
-        target_date = pd.to_datetime(f"{year}-01-01")
-        
-        if target_date in forecast_df.index:
-            data = forecast_df.loc[target_date]
-            sarimax_val = data['SARIMAX_Forecast'] / 1e6
-            lstm_val = data['LSTM_Forecast'] / 1e6
-            
-            prompt = f"""
-            <start_of_turn>user
-            You are an expert economic analyst providing a forecast summary for an executive.
-            
-            **Context:**
-            - We have two predictive models for China's total merchandise exports.
-            - A backtest on historical data (2010-2024) showed that the SARIMAX model was more accurate, with a Mean Absolute Error of $345B vs. the LSTM's $843B.
-            
-            **Forecast for {year}:**
-            - **SARIMAX (Statistical Model):** ${sarimax_val:.2f} trillion USD
-            - **LSTM (Deep Learning Model):** ${lstm_val:.2f} trillion USD
-            
-            **Your Task:**
-            Write a concise, professional analysis. Start by stating the most likely forecast based on the more historically accurate model. Then, briefly compare the two model outputs and provide a concluding sentence on the overall economic outlook implied by the forecast. Do not repeat the backtesting error numbers.
-            <end_of_turn>
-            <start_of_turn>model
-            """
+    if not all([reporter, partner, product]):
+        return "Please make a selection for all dropdowns.", ""
 
-            print(f"\nGenerating analysis for year {year}...")
-            outputs = generator(prompt, max_new_tokens=256)
-            generated_text = outputs[0]['generated_text'].split('<start_of_turn>model\n')[-1]
-            print("Analysis generated successfully.")
-            
-            return generated_text
+    # A simple mapping for country name to country code for the GDP API
+    # This would be more robust with a proper country code library
+    country_code_map = {"China": "CHN", "United States": "USA", "Germany": "DEU", "Japan": "JPN"}
+    country_code = country_code_map.get(reporter, "WLD") # Default to World if not found
 
-        else:
-            min_year, max_year = forecast_df.index.min().year, forecast_df.index.max().year
-            return f"Sorry, I don't have a forecast for {year}. Please choose a year between {min_year} and {max_year}."
+    forecast_df, _ = run_analysis_pipeline(reporter, partner, product, country_code, progress)
 
-    except (ValueError, TypeError):
-        return "Invalid input. Please enter a valid year (e.g., 2025)."
+    if forecast_df is None:
+        return "No data found for the selected combination. Please try another.", ""
+
+    # --- Create a Dynamic Prompt for the LLM ---
+    prompt = f"""
+    <start_of_turn>user
+    You are an expert economic analyst. Provide a forecast summary for the following trade relationship:
+    - **Exporting Country:** {reporter}
+    - **Importing Country/Region:** {partner}
+    - **Product Category:** {product}
+
+    **Forecasts for the next 5 years:**
+    {forecast_df.to_string()}
+
+    **Your Task:**
+    Write a concise, professional analysis based on the provided forecasts. Compare the outputs of the two models (SARIMAX and LSTM) and provide a concluding sentence on the overall economic outlook implied by the numbers.
+    <end_of_turn>
+    <start_of_turn>model
+    """
+
+    progress(1.0, desc="Generating AI Analysis...")
+    outputs = generator(prompt, max_new_tokens=512)
+    generated_text = outputs[0]['generated_text'].split('<start_of_turn>model\n')[-1]
+    
+    return forecast_df, generated_text
 
 # --- 4. Setup and Launch the App ---
-def main():
-    """Main function to launch the Gradio app."""
-    # Build absolute paths from the script's location
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(base_dir, 'data')
-    
-    sarimax_csv_path = os.path.join(data_dir, 'china_exports_forecast.csv')
-    lstm_csv_path = os.path.join(data_dir, 'china_exports_forecast_lstm.csv')
-    backtest_csv_path = os.path.join(data_dir, 'backtest_results.csv')
-    
-    forecast_df, backtest_df = load_data(sarimax_csv_path, lstm_csv_path, backtest_csv_path)
+if __name__ == "__main__":
+    reporters, partners, products = get_dropdown_choices()
 
-    iface = gr.Interface(
-        fn=lambda year: get_trade_forecast(year, forecast_df, backtest_df),
-        inputs=gr.Textbox(label="Enter a Year (e.g., 2025)", placeholder="2025"),
-        outputs=gr.Markdown(label="Generative AI Forecast Analysis"),
-        title="Gen AI-Powered Global Trade Forecaster",
-        description="Compare forecasts from statistical and deep learning models, with a dynamic analysis generated by an LLM.",
-        article="Built with Python, Statsmodels, TensorFlow, Gradio, and Hugging Face Transformers.",
-        allow_flagging='never'
-    )
+    with gr.Blocks() as demo:
+        gr.Markdown("# Gen AI-Powered Global Trade Forecaster")
+        gr.Markdown("Select an exporting country, an importing partner, and a product category to generate a 5-year forecast and a dynamic AI-powered analysis.")
+        
+        with gr.Row():
+            reporter_dd = gr.Dropdown(reporters, label="Reporter (Exporting Country)", value="China")
+            partner_dd = gr.Dropdown(partners, label="Partner (Importing Country/Region)", value="World")
+            product_dd = gr.Dropdown(products, label="Product Category", value="Total merchandise")
+        
+        submit_btn = gr.Button("Generate Forecast and Analysis")
+        
+        forecast_output = gr.DataFrame(label="Forecasted Values (Next 5 Years)")
+        analysis_output = gr.Markdown(label="Generative AI Analysis")
+
+        submit_btn.click(
+            fn=generate_analysis,
+            inputs=[reporter_dd, partner_dd, product_dd],
+            outputs=[forecast_output, analysis_output]
+        )
 
     print("Launching Gradio web application...")
-    iface.launch(server_name="0.0.0.0", server_port=7860)
-
-if __name__ == "__main__":
-    main()
+    demo.launch(server_name="0.0.0.0", server_port=7860)
