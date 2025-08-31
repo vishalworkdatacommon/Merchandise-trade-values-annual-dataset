@@ -10,7 +10,6 @@ from src.advanced_forecasting_script import forecast_lstm
 def run_analysis_pipeline(reporter, partner, product, country_code, progress=gr.Progress()):
     """
     Runs the full end-to-end analysis pipeline for a given selection.
-    Includes robust error handling and data validation.
     """
     try:
         data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')

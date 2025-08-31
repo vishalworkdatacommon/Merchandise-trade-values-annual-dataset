@@ -4,7 +4,7 @@ import os
 
 def process_trade_data(input_path, output_path, reporter="China", partner="World", product="Total merchandise"):
     """
-    Reads the large trade data CSV in chunks, filters for a specific data series,
+    Reads the large trade data CSV in chunks, filters for a specific data series by name,
     and saves the result to a new CSV.
     """
     print(f"Processing {input_path} for Reporter='{reporter}', Partner='{partner}', Product='{product}'...")
