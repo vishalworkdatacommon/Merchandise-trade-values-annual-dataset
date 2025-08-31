@@ -4,31 +4,28 @@ import os
 
 def get_comtrade_data(reporter_id, partner_id, product_id):
     """
-    Fetches annual trade data from the UN Comtrade API using an API key.
+    Fetches annual trade data from the UN Comtrade public API.
     """
-    base_url = "https://comtradeapi.un.org/data/v1/get/C/A/HS"
-    
-    api_key = os.environ.get("UN_COMTRADE_API_KEY")
-    if not api_key:
-        raise ValueError("UN_COMTRADE_API_KEY environment variable not set.")
-
-    headers = {
-        "Ocp-Apim-Subscription-Key": api_key
-    }
+    # This is the correct, public, key-less API endpoint.
+    base_url = "https://comtradeapi.un.org/public/v1/get"
     
     params = {
-        "reporterCode": reporter_id,
-        "partnerCode": partner_id,
-        "cmdCode": product_id,
-        "period": "recent",
-        "flowCode": "M",
-        "includeDesc": "true"
+        "r": reporter_id,
+        "p": partner_id,
+        "ps": "recent",
+        "px": "HS",
+        "cc": product_id,
+        "rg": "1", # Imports
+        "freq": "A",
+        "type": "C",
+        "head": "H",
+        "fmt": "json"
     }
     
-    print(f"Fetching data from UN Comtrade for: r={reporter_id}, p={partner_id}, cc={product_id}")
+    print(f"Fetching data from UN Comtrade Public API for: r={reporter_id}, p={partner_id}, cc={product_id}")
     
     try:
-        response = requests.get(base_url, params=params, headers=headers)
+        response = requests.get(base_url, params=params)
         response.raise_for_status()
         data = response.json()
         
@@ -37,6 +34,7 @@ def get_comtrade_data(reporter_id, partner_id, product_id):
             return pd.DataFrame()
 
         df = pd.DataFrame(data['data'])
+        
         df = df[['period', 'reporterDesc', 'partnerDesc', 'cmdDesc', 'primaryValue']]
         
         df.rename(columns={
@@ -57,7 +55,6 @@ def get_comtrade_data(reporter_id, partner_id, product_id):
         return pd.DataFrame()
 
 if __name__ == "__main__":
-    # This will fail unless you set the environment variable
     test_df = get_comtrade_data(reporter_id="842", partner_id="0", product_id="8703")
     if not test_df.empty:
         print("\n--- Test API Fetch Successful ---")
