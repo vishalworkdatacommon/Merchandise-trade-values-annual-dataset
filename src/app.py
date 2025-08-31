@@ -36,7 +36,7 @@ def load_data(sarimax_path, lstm_path, backtest_path):
         raise FileNotFoundError(f"Error loading data files: {e}. Please run all prerequisite scripts.")
 
 # --- 3. Define Core Logic ---
-def get_trade_forecast(year):
+def get_trade_forecast(year, forecast_df, backtest_df):
     """
     Retrieves forecasts and uses a Gen AI model to generate a dynamic analysis.
     """
@@ -91,7 +91,8 @@ def get_trade_forecast(year):
         return "Invalid input. Please enter a valid year (e.g., 2025)."
 
 # --- 5. Setup and Launch the App ---
-if __name__ == "__main__":
+def main():
+    """Main function to launch the Gradio app."""
     sarimax_csv_path = os.path.join('data', 'china_exports_forecast.csv')
     lstm_csv_path = os.path.join('data', 'china_exports_forecast_lstm.csv')
     backtest_csv_path = os.path.join('data', 'backtest_results.csv')
@@ -99,7 +100,7 @@ if __name__ == "__main__":
     forecast_df, backtest_df = load_data(sarimax_csv_path, lstm_csv_path, backtest_csv_path)
 
     iface = gr.Interface(
-        fn=get_trade_forecast,
+        fn=lambda year: get_trade_forecast(year, forecast_df, backtest_df),
         inputs=gr.Textbox(label="Enter a Year (e.g., 2025)", placeholder="2025"),
         outputs=gr.Markdown(label="Generative AI Forecast Analysis"),
         title="Gen AI-Powered Global Trade Forecaster",
@@ -110,3 +111,6 @@ if __name__ == "__main__":
 
     print("Launching Gradio web application...")
     iface.launch(server_name="0.0.0.0", server_port=7860)
+
+if __name__ == "__main__":
+    main()
