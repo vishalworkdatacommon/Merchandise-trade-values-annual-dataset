@@ -9,3 +9,4 @@ wbgapi
 transformers
 torch
 accelerate
+scikit-learn
