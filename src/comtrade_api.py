@@ -4,25 +4,21 @@ import os
 
 def get_comtrade_data(reporter_id, partner_id, product_id):
     """
-    Fetches annual trade data from the UN Comtrade public API.
+    Fetches annual trade data from the UN Comtrade public API using the correct endpoint and parameters.
     """
-    # This is the correct, public, key-less API endpoint.
-    base_url = "https://comtradeapi.un.org/public/v1/get"
+    # This is the correct, documented public API endpoint structure
+    base_url = f"https://comtradeapi.un.org/public/v1/get/C/A/HS"
     
     params = {
-        "r": reporter_id,
-        "p": partner_id,
-        "ps": "recent",
-        "px": "HS",
-        "cc": product_id,
-        "rg": "1", # Imports
-        "freq": "A",
-        "type": "C",
-        "head": "H",
-        "fmt": "json"
+        "reporterCode": reporter_id,
+        "partnerCode": partner_id,
+        "cmdCode": product_id,
+        "period": "recent",
+        "flowCode": "M", # M for Imports, X for Exports
+        "includeDesc": "true"
     }
     
-    print(f"Fetching data from UN Comtrade Public API for: r={reporter_id}, p={partner_id}, cc={product_id}")
+    print(f"Fetching data from UN Comtrade Public API with correct parameters...")
     
     try:
         response = requests.get(base_url, params=params)
@@ -35,8 +31,8 @@ def get_comtrade_data(reporter_id, partner_id, product_id):
 
         df = pd.DataFrame(data['data'])
         
+        # Select and rename columns to match the project's existing structure
         df = df[['period', 'reporterDesc', 'partnerDesc', 'cmdDesc', 'primaryValue']]
-        
         df.rename(columns={
             'period': 'Year',
             'reporterDesc': 'Reporter',
@@ -45,6 +41,7 @@ def get_comtrade_data(reporter_id, partner_id, product_id):
             'primaryValue': 'Value'
         }, inplace=True)
         
+        # Convert value to millions for consistency
         df['Value'] = df['Value'] / 1e6
         
         print(f"Successfully fetched and processed {len(df)} rows of data.")
@@ -55,6 +52,7 @@ def get_comtrade_data(reporter_id, partner_id, product_id):
         return pd.DataFrame()
 
 if __name__ == "__main__":
+    # Example usage: Fetch data for USA (842) importing Cars (8703) from the World (0)
     test_df = get_comtrade_data(reporter_id="842", partner_id="0", product_id="8703")
     if not test_df.empty:
         print("\n--- Test API Fetch Successful ---")
