@@ -5,7 +5,7 @@ colorFrom: blue
 colorTo: indigo
 sdk: gradio
 sdk_version: "4.29.0"
-app_file: src/main.py
+app_file: src/app.py
 ---
 
 # AI-Powered Global Trade Forecasting and Analysis Platform

@@ -3,39 +3,6 @@ import gradio as gr
 import os
 from transformers import pipeline
 import torch
-import sys
-
-# --- 0. Setup and Data Generation ---
-# This block ensures that all necessary data files are present before launching the app.
-# If the forecast files don't exist, it runs the full data pipeline.
-def setup_application():
-    """Checks for necessary files and runs the data pipeline if they are missing."""
-    print("--- Verifying Application Setup ---")
-    
-    # Define paths to the final output files the app needs
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(base_dir, '..', 'data')
-    sarimax_csv_path = os.path.join(data_dir, 'china_exports_forecast.csv')
-    lstm_csv_path = os.path.join(data_dir, 'china_exports_forecast_lstm.csv')
-    backtest_csv_path = os.path.join(data_dir, 'backtest_results.csv')
-
-    # Check if all necessary files exist
-    if not all(os.path.exists(p) for p in [sarimax_csv_path, lstm_csv_path, backtest_csv_path]):
-        print("One or more data files are missing. Running the full data pipeline...")
-        try:
-            from setup_pipeline import run_full_pipeline
-            run_full_pipeline()
-            print("Data pipeline completed successfully.")
-        except Exception as e:
-            print(f"An error occurred during the data pipeline setup: {e}")
-            # Exit if the pipeline fails, as the app cannot run.
-            sys.exit(1)
-    else:
-        print("All necessary data files found. Proceeding to launch.")
-
-# Run the setup process
-setup_application()
-
 
 # --- 1. Initialize the Generative AI Model ---
 print("Initializing Generative AI pipeline...")
@@ -45,7 +12,7 @@ try:
         model='google/gemma-2b-it', 
         torch_dtype=torch.bfloat16,
         device_map="auto",
-        token=os.environ.get("HF_TOKEN") # Use the token from secrets
+        token=os.environ.get("HF_TOKEN")
     )
     print("Generative AI pipeline loaded successfully.")
 except Exception as e:
@@ -53,9 +20,9 @@ except Exception as e:
     def generator(prompt, **kwargs):
         return [{"generated_text": "Generative AI model could not be loaded. This is a placeholder."}]
 
-# --- 2. Load Forecast & Backtest Data ---
+# --- 2. Load Pre-Generated Data ---
 def load_data(sarimax_path, lstm_path, backtest_path):
-    """Loads all necessary data files."""
+    """Loads all necessary pre-generated data files."""
     try:
         sarimax_df = pd.read_csv(sarimax_path, index_col='Year', parse_dates=True)
         lstm_df = pd.read_csv(lstm_path, index_col='Year', parse_dates=True)
@@ -66,7 +33,7 @@ def load_data(sarimax_path, lstm_path, backtest_path):
         
         return combined_df, backtest_df
     except FileNotFoundError as e:
-        raise FileNotFoundError(f"Error loading data files: {e}. Please run all prerequisite scripts.")
+        raise FileNotFoundError(f"CRITICAL ERROR: Data files not found: {e}. The application cannot start.")
 
 # --- 3. Define Core Logic ---
 def get_trade_forecast(year, forecast_df, backtest_df):
@@ -93,7 +60,7 @@ def get_trade_forecast(year, forecast_df, backtest_df):
             - We have two predictive models for China's total merchandise exports.
             - A backtest on historical data (2010-2024) showed that the SARIMAX model was more accurate, with a Mean Absolute Error of $345B vs. the LSTM's $843B.
             
-            **Forecast for {year}:**
+            **Forecast for {year}:
             - **SARIMAX (Statistical Model):** ${sarimax_val:.2f} trillion USD
             - **LSTM (Deep Learning Model):** ${lstm_val:.2f} trillion USD
             
@@ -120,7 +87,7 @@ def get_trade_forecast(year, forecast_df, backtest_df):
 # --- 4. Setup and Launch the App ---
 def main():
     """Main function to launch the Gradio app."""
-    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+    data_dir = 'data' # The data will be in the 'data' directory at the root
     sarimax_csv_path = os.path.join(data_dir, 'china_exports_forecast.csv')
     lstm_csv_path = os.path.join(data_dir, 'china_exports_forecast_lstm.csv')
     backtest_csv_path = os.path.join(data_dir, 'backtest_results.csv')
