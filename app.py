@@ -36,7 +36,6 @@ def get_dropdown_choices():
         with open('data/commodities.json', 'r') as f:
             commodities = json.load(f)
             
-        # "World" is a valid partner, but not a reporter.
         partners = [{"id": "0", "text": "World"}] + reporters
         
         reporter_choices = [(r['text'], r['id']) for r in reporters if r['text'] != 'World']
@@ -91,12 +90,12 @@ if __name__ == "__main__":
 
     with gr.Blocks() as demo:
         gr.Markdown("# Gen AI-Powered Global Trade Forecaster")
-        gr.Markdown("Select an exporting country, an importing partner, and a product category to generate a 5-year forecast using live data from the UN Comtrade API.")
+        gr.Markdown("Select an exporting country, an importing partner, and a product category to generate a 5-year forecast.")
         
         with gr.Row():
-            reporter_dd = gr.Dropdown(reporter_choices, label="Reporter (Exporting Country)", value="842") # Default to USA
-            partner_dd = gr.Dropdown(partner_choices, label="Partner (Importing Country/Region)", value="0") # Default to World
-            product_dd = gr.Dropdown(commodity_choices, label="Product Category", value="87") # Default to Vehicles
+            reporter_dd = gr.Dropdown(reporter_choices, label="Reporter (Exporting Country)", value="842")
+            partner_dd = gr.Dropdown(partner_choices, label="Partner (Importing Country/Region)", value="0")
+            product_dd = gr.Dropdown(commodity_choices, label="Product Category", value="87")
         
         submit_btn = gr.Button("Generate Forecast and Analysis")
         
