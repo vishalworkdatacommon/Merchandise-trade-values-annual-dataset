@@ -60,7 +60,7 @@ def get_trade_forecast(year, forecast_df, backtest_df):
             - We have two predictive models for China's total merchandise exports.
             - A backtest on historical data (2010-2024) showed that the SARIMAX model was more accurate, with a Mean Absolute Error of $345B vs. the LSTM's $843B.
             
-            **Forecast for {year}:
+            **Forecast for {year}:**
             - **SARIMAX (Statistical Model):** ${sarimax_val:.2f} trillion USD
             - **LSTM (Deep Learning Model):** ${lstm_val:.2f} trillion USD
             
@@ -87,7 +87,7 @@ def get_trade_forecast(year, forecast_df, backtest_df):
 # --- 4. Setup and Launch the App ---
 def main():
     """Main function to launch the Gradio app."""
-    data_dir = 'data' # The data is in the 'data' directory at the root
+    data_dir = 'data'
     sarimax_csv_path = os.path.join(data_dir, 'china_exports_forecast.csv')
     lstm_csv_path = os.path.join(data_dir, 'china_exports_forecast_lstm.csv')
     backtest_csv_path = os.path.join(data_dir, 'backtest_results.csv')

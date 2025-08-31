@@ -121,6 +121,7 @@ dmypy.json
 .pytype/
 
 # Large data files
-data/
-*.csv
-*.png
+# We are committing the necessary data files for this project.
+# data/
+# *.csv
+# *.png
