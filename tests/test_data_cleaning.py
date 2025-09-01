@@ -1,4 +1,3 @@
-
 import unittest
 import pandas as pd
 import os
@@ -30,7 +29,8 @@ class TestDataCleaning(unittest.TestCase):
         self.assertFalse(1000 in cleaned_df['Value'].values)
         
         # Check if the value for the year 2002 is close to the median
-        self.assertTrue(np.isclose(cleaned_df.loc[cleaned_df.index.year == 2002, 'Value'].iloc[0], 130.0))
+        value_2002 = cleaned_df[cleaned_df['Year'].dt.year == 2002]['Value'].values[0]
+        self.assertTrue(np.isclose(value_2002, 130.0))
 
 if __name__ == '__main__':
     unittest.main()

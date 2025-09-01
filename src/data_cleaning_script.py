@@ -52,6 +52,9 @@ def clean_and_treat_outliers(df):
         logging.warning(f"Found zero or negative values after cleaning. Inspecting...\n{df_agg[df_agg['Value'] <= 0]}")
         df_agg = df_agg[df_agg['Value'] > 0]
 
+    # Drop rows where rolling median could not be calculated
+    df_agg.dropna(inplace=True)
+
     logging.info("Cleaned data successfully.")
     logging.info(f"Cleaned Data Sample:\n{df_agg.head()}")
     
@@ -74,4 +77,3 @@ if __name__ == "__main__":
         print("------------------------------------")
     else:
         print(f"Test file not found at {input_csv_path}. Skipping standalone test.")
-
