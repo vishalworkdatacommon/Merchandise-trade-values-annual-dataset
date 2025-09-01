@@ -1,12 +1,26 @@
 import pandas as pd
 import os
+import logging
 
-def clean_and_treat_outliers(input_path, output_path):
+def clean_and_treat_outliers(df):
+    """Cleans, aggregates, and treats outliers in the trade data.
+
+    This function performs several preprocessing steps:
+    1. Aggregates the data by year, summing the 'Value'.
+    2. Sets a proper yearly frequency ('YS') for the time series.
+    3. Identifies outliers using a rolling median and standard deviation approach.
+    4. Replaces identified outliers with the rolling median.
+    5. Removes any rows with zero or negative values.
+
+    Args:
+        df (pd.DataFrame): The raw trade data DataFrame from the Comtrade API.
+                           Expected to have 'Year' and 'Value' columns.
+
+    Returns:
+        pd.DataFrame: A cleaned and aggregated DataFrame with a DatetimeIndex
+                      and treated outliers, ready for feature engineering.
     """
-    Loads, cleans, and treats outliers in the time-series data.
-    """
-    print(f"Loading data from {input_path} for cleaning and outlier treatment...")
-    df = pd.read_csv(input_path)
+    logging.info("Cleaning and treating outliers in the DataFrame...")
 
     # --- Data Aggregation ---
     df_agg = df.groupby('Year')['Value'].sum().reset_index()
@@ -14,9 +28,7 @@ def clean_and_treat_outliers(input_path, output_path):
     df_agg.index = pd.to_datetime(df_agg.index, format='%Y')
     df_agg = df_agg.asfreq('YS')
 
-    print("\n--- Initial Data Profile ---")
-    print(df_agg.head())
-    print("----------------------------")
+    logging.info(f"Initial Data Profile:\n{df_agg.head()}")
 
     # --- Outlier Detection and Treatment ---
     window_size = 5
@@ -29,29 +41,37 @@ def clean_and_treat_outliers(input_path, output_path):
     outliers = df_agg[is_outlier]
 
     if not outliers.empty:
-        print(f"\nFound {len(outliers)} potential outlier(s):")
-        print(outliers)
-        
-        print("\nTreating outliers by replacing them with the rolling median...")
+        logging.warning(f"Found {len(outliers)} potential outlier(s):\n{outliers}")
+        logging.info("Treating outliers by replacing them with the rolling median...")
         df_agg.loc[is_outlier, 'Value'] = rolling_median[is_outlier]
-        print("Outlier treatment complete.")
+        logging.info("Outlier treatment complete.")
     else:
-        print("\nNo significant outliers were detected.")
+        logging.info("No significant outliers were detected.")
 
     if (df_agg['Value'] <= 0).any():
-        print("\nWarning: Found zero or negative values after cleaning. Inspecting...")
-        print(df_agg[df_agg['Value'] <= 0])
+        logging.warning(f"Found zero or negative values after cleaning. Inspecting...\n{df_agg[df_agg['Value'] <= 0]}")
         df_agg = df_agg[df_agg['Value'] > 0]
 
-    df_agg.to_csv(output_path)
-    print(f"\nCleaned data successfully saved to {output_path}")
-    print("\n--- Cleaned Data Sample ---")
-    print(df_agg.head())
-    print("---------------------------")
+    logging.info("Cleaned data successfully.")
+    logging.info(f"Cleaned Data Sample:\n{df_agg.head()}")
+    
+    return df_agg.reset_index()
+
 
 if __name__ == "__main__":
+    # This block is for testing the function with a sample CSV file.
     data_dir = 'data'
-    processed_csv_path = os.path.join(data_dir, 'processed_china_exports.csv')
-    cleaned_output_path = os.path.join(data_dir, 'china_exports_cleaned.csv')
+    input_csv_path = os.path.join(data_dir, 'processed_china_exports.csv')
     
-    clean_and_treat_outliers(processed_csv_path, cleaned_output_path)
+    if os.path.exists(input_csv_path):
+        print(f"Loading test data from {input_csv_path}")
+        test_df = pd.read_csv(input_csv_path)
+        cleaned_df = clean_and_treat_outliers(test_df)
+        
+        print("\n--- Standalone Test Successful ---")
+        print("Cleaned DataFrame head:")
+        print(cleaned_df.head())
+        print("------------------------------------")
+    else:
+        print(f"Test file not found at {input_csv_path}. Skipping standalone test.")
+

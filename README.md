@@ -40,10 +40,12 @@ pip install -r requirements.txt
 
 ### 3. Running the Application Locally
 
-The entire pipeline is now managed by a single main script. This will process the data, run the forecasts, and launch the web application.
+The application is run directly from the `app.py` script. This will process the data, run the forecasts, and launch the web application.
+
+*(Note: The previous entry point `src/main.py` has been deprecated and removed.)*
 
 ```bash
-python3 src/main.py
+python3 app.py
 ```
 Open your browser and navigate to `http://localhost:7860` to use the app.
 
