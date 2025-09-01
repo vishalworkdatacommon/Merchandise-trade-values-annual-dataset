@@ -6,6 +6,7 @@ import numpy as np
 
 from src.forecasting_script import forecast_sarimax
 from src.advanced_forecasting_script import forecast_lstm
+from src.config import BACKTEST_YEARS
 
 def evaluate_models(enriched_df):
     """Performs a backtest on forecasting models to evaluate performance.
@@ -30,13 +31,13 @@ def evaluate_models(enriched_df):
     logging.info("Starting model evaluation backtest...")
 
     # --- 1. Split Data ---
-    # Use the last 5 years for testing and the rest for training
-    split_point = enriched_df['Year'].max() - pd.DateOffset(years=5)
+    # Use the last N years for testing and the rest for training
+    split_point = enriched_df['Year'].max() - pd.DateOffset(years=BACKTEST_YEARS)
     train_df = enriched_df[enriched_df['Year'] <= split_point]
     test_df = enriched_df[enriched_df['Year'] > split_point]
 
-    if len(test_df) < 5:
-        logging.warning("Not enough data for a full 5-year backtest. Skipping evaluation.")
+    if len(test_df) < BACKTEST_YEARS:
+        logging.warning(f"Not enough data for a full {BACKTEST_YEARS}-year backtest. Skipping evaluation.")
         return None
 
     actual_values = test_df.set_index('Year')['Value']
